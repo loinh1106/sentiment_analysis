@@ -5,7 +5,7 @@ from transformers import AutoModel
 class SentimentClassifier(nn.Module):
   def __init__(self, n_classes=2):
     super(SentimentClassifier, self).__init__()
-    self.bert = AutoModel.from_pretrained('vinai/phobert-base-v2')
+    self.bert = AutoModel.from_pretrained('vinai/phobert-base')
     self.drop = nn.Dropout(p=0.5)
     self.fc = nn.Linear(self.bert.config.hidden_size, n_classes)
     nn.init.kaiming_normal_(self.fc.weight)
