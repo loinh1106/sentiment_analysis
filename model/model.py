@@ -5,11 +5,11 @@ from transformers import AutoModel
 class SentimentClassifier(nn.Module):
   def __init__(self, n_classes=2):
     super(SentimentClassifier, self).__init__()
-    self.bert = AutoModel.from_pretrained('vinai/phobert-base')
+    self.bert = AutoModel.from_pretrained('vinai/phobert-base-v2')
     self.drop = nn.Dropout(p=0.5)
     self.fc = nn.Linear(self.bert.config.hidden_size, n_classes)
-    nn.init.normal_(self.fc.weight, std=0.02)
-    nn.init.normal_(self.fc.bias,0)
+    nn.init.kaiming_normal_(self.fc.weight)
+    nn.init.kaiming_normal_(self.fc.bias,0)
   
   def forward(self, input_ids, attention_mask):
     last_hidden_state, output = self.bert(

@@ -97,9 +97,8 @@ def eval(model, test_loader,criterion,test_data = False):
 if __name__ == '__main__':
     seed_everything(86)
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base', use_fast=True)
-
-    df = pd.read_csv('./data/train_data.csv')
+    tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base-v2', use_fast=True)
+    df = pd.read_csv('./data/data_segment.csv')
     X_train,X_test, y_train, y_test = train_test_split(df, df['label'],test_size = 0.1, random_state= 42)
     X_train, X_val, y_train, y_val = train_test_split(X_train,y_train,test_size = 0.1, random_state= 42)
     train_loader, valid_loader = prepare_loaders(X_train, X_val, tokenizer=tokenizer)
@@ -125,5 +124,5 @@ if __name__ == '__main__':
         val_acc = eval(model=model,criterion=criterion, test_loader=test_loader)
 
         if val_acc > best_acc:
-            torch.save(model.state_dict(), f'./ckpt/phobert_at_{epoch}.pth')
+            torch.save(model.state_dict(), f'./ckpt/phobert_at_{epoch}_epoch.pth')
             best_acc = val_acc
