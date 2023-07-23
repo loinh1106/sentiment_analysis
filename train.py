@@ -1,3 +1,4 @@
+import os
 import warnings
 import sklearn
 import numpy as np
@@ -124,5 +125,8 @@ if __name__ == '__main__':
         val_acc = eval(model=model,criterion=criterion, test_loader=test_loader)
 
         if val_acc > best_acc:
+            print(f'Best accuracy: \t{val_acc}')
+            if not os.path.exists('ckpt'):
+                os.mkdir('ckpt')
             torch.save(model.state_dict(), f'./ckpt/phobert_at_{epoch}_epoch.pth')
             best_acc = val_acc
