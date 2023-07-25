@@ -10,3 +10,6 @@ seaborn
 gensim
 openpyxl
 py_vncorenlp
+fairseq
+tensorboardX
+fastBPE

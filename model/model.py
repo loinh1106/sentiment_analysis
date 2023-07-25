@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from transformers import AutoModel
 
@@ -7,7 +8,8 @@ class SentimentClassifier(nn.Module):
     super(SentimentClassifier, self).__init__()
     self.bert = AutoModel.from_pretrained('vinai/phobert-base-v2')
     self.drop = nn.Dropout(p=0.5)
-    self.fc = nn.Linear(self.bert.config.hidden_size, n_classes)
+    #self.fc = nn.Linear(self.bert.config.hidden_size, n_classes)
+    self.qa_outputs = nn.Linear(4*self.bert.config.hidden_size, n_classes)
     nn.init.normal_(self.fc.weight, std=0.02)
     nn.init.normal_(self.fc.bias,0)
   
@@ -17,7 +19,8 @@ class SentimentClassifier(nn.Module):
         attention_mask = attention_mask,
         return_dict=False
     )
-    x = self.drop(output)
-    x= self.fc(x)
+    cls_output = torch.cat((output[2][-1][:,0, ...],output[2][-2][:,0, ...], \
+                            output[2][-3][:,0, ...], output[2][-4][:,0, ...]),-1)
+    logits = self.qa_outputs(cls_output)
 
-    return x
+    return logits

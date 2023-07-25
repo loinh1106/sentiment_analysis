@@ -13,5 +13,5 @@ py_vncorenlp.download_model(save_dir='/absolute/path/to/vncorenlp')
 ```
 ## Train
 ```
-python train.py
+bash train.sh
 ```
