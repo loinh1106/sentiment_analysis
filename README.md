@@ -11,6 +11,12 @@ sudo apt install default-jre -y
 pip install py_vncorenlp
 py_vncorenlp.download_model(save_dir='/absolute/path/to/vncorenlp')
 ```
+
+## Requirements
+```
+cd sentiment_analysis
+pip install -r requirements.txt
+```
 ## Train
 ```
 bash train.sh

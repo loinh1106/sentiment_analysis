@@ -9,7 +9,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report,accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 import torch
 import torch.nn as nn
-from torch.nn.functional import F
 from torch.optim import AdamW
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from loader.dataset import SentimentDataset
