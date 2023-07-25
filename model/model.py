@@ -10,8 +10,7 @@ class SentimentClassifier(nn.Module):
     self.drop = nn.Dropout(p=0.5)
     #self.fc = nn.Linear(self.bert.config.hidden_size, n_classes)
     self.qa_outputs = nn.Linear(4*self.bert.config.hidden_size, n_classes)
-    nn.init.normal_(self.fc.weight, std=0.02)
-    nn.init.normal_(self.fc.bias,0)
+    self.init_weights()
   
   def forward(self, input_ids, attention_mask):
     last_hidden_state, output = self.bert(
