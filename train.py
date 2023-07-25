@@ -138,7 +138,7 @@ if __name__ == '__main__':
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base-v2', use_fast=True)
     df = pd.read_csv(args.data_path)
-
+    df['content'] = df['content'].apply(str)
     vocab = Dictionary()
     vocab.add_from_file(args.dict_path)
     y = df.label.values
