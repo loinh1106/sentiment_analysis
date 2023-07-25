@@ -140,7 +140,7 @@ if __name__ == '__main__':
     df = pd.read_csv(args.data_path)
 
     vocab = Dictionary()
-    vocab.add_from_file('./phobert/vocab.txt')
+    vocab.add_from_file(args.dict_path)
     y = df.label.values
     X_train = convert_lines(df, vocab, bpe,args.max_sequence_length)
     
