@@ -42,7 +42,7 @@ def convert_lines(df, vocab, bpe, max_sequence_length):
     pad_id = 1
 
     for idx, row in tqdm(df.iterrows(), total=len(df)): 
-        subwords = bpe.encode('<s> '+row.text+' </s>')
+        subwords = bpe.encode('<s> '+row.content+' </s>')
         input_ids = vocab.encode_line(subwords, append_eos=False, add_if_not_exist=False).long().tolist()
         if len(input_ids) > max_sequence_length: 
             input_ids = input_ids[:max_sequence_length] 
