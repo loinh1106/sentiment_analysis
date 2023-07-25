@@ -53,71 +53,12 @@ def convert_lines(df, vocab, bpe, max_sequence_length):
         outputs[idx,:] = np.array(input_ids)
     return outputs
 
-def train(model, criterion, optimizer, train_loader,lr_scheduler):
-    model.train()
-    losses = []
-    correct = 0
-
-    for data in train_loader:
-        input_ids = data['input_ids'].to(device)
-        attention_mask = data['attention_mask'].to(device)
-        targets = data['targets'].to(device)
-
-        optimizer.zero_grad()
-        outputs = model(
-            input_ids=input_ids,
-            attention_mask=attention_mask
-        )
-
-        loss = criterion(outputs, targets)
-        _, pred = torch.max(outputs, dim=1)
-
-        correct += torch.sum(pred == targets)
-        losses.append(loss.item())
-        loss.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        optimizer.step()
-        lr_scheduler.step()
-
-    print(f'Train Accuracy: {correct.double()/len(train_loader.dataset)} Loss: {np.mean(losses)}')
-
-def eval(model, test_loader,criterion,test_data = False):
-    model.eval()
-    losses = []
-    correct = 0
-
-    with torch.no_grad():
-        data_loader = test_loader if test_data else valid_loader
-        for data in data_loader:
-            input_ids = data['input_ids'].to(device)
-            attention_mask = data['attention_mask'].to(device)
-            targets = data['targets'].to(device)
-
-            outputs = model(
-                input_ids=input_ids,
-                attention_mask=attention_mask
-            )
-
-            _, pred = torch.max(outputs, dim=1)
-
-            loss = criterion(outputs, targets)
-            correct += torch.sum(pred == targets)
-            losses.append(loss.item())
-    
-    if test_data:
-        print(f'Test Accuracy: {correct.double()/len(test_loader.dataset)} Loss: {np.mean(losses)}')
-        return correct.double()/len(test_loader.dataset)
-    else:
-        print(f'Valid Accuracy: {correct.double()/len(valid_loader.dataset)} Loss: {np.mean(losses)}')
-        return correct.double()/len(valid_loader.dataset)
-
 
 def parser_opt():
     parser = argparse.ArgumentParser()
-    #parser.add_argument('--train_path', type=str, default='./data/train.csv')
     parser.add_argument('--dict_path', type=str, default="./phobert/vocab.txt")
-    #parser.add_argument('--config_path', type=str, default="./phobert/config.json")
-    #parser.add_argument('--rdrsegmenter_path', type=str, required=True)
+    parser.add_argument('--config_path', type=str, default="./phobert/config.json")
+    parser.add_argument('--pretrained_path', type=str, required=True,default='./phobert/model.bin')
     parser.add_argument('--data_path', type=str, default='./data/data_segment.csv')
     parser.add_argument('--max_sequence_length', type=int, default=256)
     parser.add_argument('--batch_size', type=int, default=24)
@@ -136,6 +77,7 @@ if __name__ == '__main__':
     args = parser_opt()
     seed_everything(args.seed)
     bpe = fastBPE(args)
+    
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base', use_fast=True)
     df = pd.read_csv(args.data_path)
@@ -145,11 +87,15 @@ if __name__ == '__main__':
     y = df.label.values
     X_train = convert_lines(df, vocab, bpe,args.max_sequence_length)
     
-    #train_loader, valid_loader = prepare_loaders(X_train, X_val, tokenizer=tokenizer)
-    #testset = SentimentDataset(X_test, tokenizer=tokenizer)
-    #test_loader = DataLoader(testset, batch_size=args.batch_size, shuffle=False)
     
-    model = SentimentClassifier(n_classes=2).to(device)
+    config = RobertaConfig.from_pretrained(
+    args.config_path,
+    output_hidden_states=True,
+    num_labels=1
+)
+    model = SentimentClassifier.from_pretrained(args.pretrained_path, config=config)
+    model.cuda()
+
     criterion = FocalLoss(gamma=2, alpha=-0.25)
     # Recommendation by BERT: lr: 5e-5, 2e-5, 3e-5
     # Batchsize: 16, 32
