@@ -9,9 +9,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report,accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 import torch
 import torch.nn as nn
-from torch.optim import AdamW
+#from torch.optim import AdamW
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from loader.dataset import SentimentDataset
+from transformers import *
 from transformers import get_linear_schedule_with_warmup, AutoTokenizer, AutoModel, logging
 from model.model import SentimentClassifier
 from loss.losses import FocalLoss
@@ -136,7 +137,7 @@ if __name__ == '__main__':
     seed_everything(args.seed)
     bpe = fastBPE(args)
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base-v2', use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained('vinai/phobert-base', use_fast=True)
     df = pd.read_csv(args.data_path)
     df['content'] = df['content'].apply(str)
     vocab = Dictionary()
@@ -165,7 +166,7 @@ if __name__ == '__main__':
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=100, num_training_steps=num_train_optimization_steps)  # PyTorch scheduler
     scheduler0 = get_constant_schedule(optimizer)  # PyTorch scheduler
-    optimizer = AdamW(model.parameters(), lr=args.lr)
+    #optimizer = AdamW(model.parameters(), lr=args.lr)
     
     if not os.path.exists(args.ckpt_path):
         os.mkdir(args.ckpt_path)
