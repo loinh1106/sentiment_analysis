@@ -25,7 +25,7 @@ tar -xzvf PhoBERT_base_transformers.tar.gz
 
 ## Train
 ```
-!python train.py --fold <fold_id> \
+python train.py --fold <fold_id> \
 --dict_path <phobert dict path>\
 --config_path <path to config> \
 --data_path <data path> \

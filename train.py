@@ -9,17 +9,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report,accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 import torch
 import torch.nn as nn
-#from torch.optim import AdamW
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from loader.dataset import SentimentDataset
 from transformers import *
 from transformers import get_linear_schedule_with_warmup, AutoTokenizer, AutoModel, logging
 from model.model import SentimentClassifier
-from loss.losses import FocalLoss
+#from loss.losses import FocalLoss
 from sklearn.model_selection import StratifiedKFold
 from transformers import get_constant_schedule
 from fairseq.data.encoders.fastbpe import fastBPE
 from fairseq.data import Dictionary
+from torchvision.ops.focal_loss import sigmoid_focal_loss
 
 
 def seed_everything(seed_value):
@@ -56,12 +56,12 @@ def convert_lines(df, vocab, bpe, max_sequence_length):
 
 def parser_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dict_path', type=str, default="./phobert/vocab.txt")
-    parser.add_argument('--config_path', type=str, default="./phobert/config.json")
-    parser.add_argument('--pretrained_path', type=str, required=True,default='./phobert/model.bin')
+    parser.add_argument('--dict_path', type=str, default="./PhoBERT_base_transformers/dict.txt")
+    parser.add_argument('--config_path', type=str, default="./PhoBERT_base_transformers/config.json")
+    parser.add_argument('--pretrained_path', type=str, required=True,default='./PhoBERT_base_transformers/model.bin')
     parser.add_argument('--data_path', type=str, default='./data/data_segment.csv')
     parser.add_argument('--max_sequence_length', type=int, default=256)
-    parser.add_argument('--batch_size', type=int, default=24)
+    parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--accumulation_steps', type=int, default=5)
     parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--fold', type=int, default=0)
@@ -69,7 +69,7 @@ def parser_opt():
     parser.add_argument('--n_classes', type=int, default=2)
     parser.add_argument('--lr', type=float, default=3e-5)
     parser.add_argument('--ckpt_path', type=str, default='./ckpt')
-    parser.add_argument('--bpe_codes', default="./phobert/bpe.codes",type=str, help='path to fastBPE BPE')
+    parser.add_argument('--bpe_codes', default="./PhoBERT_base_transformers/bpe.codes",type=str, help='path to fastBPE BPE')
     opt = parser.parse_args()
     return opt
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     model = SentimentClassifier.from_pretrained(args.pretrained_path, config=config)
     model.cuda()
 
-    criterion = FocalLoss(gamma=2, alpha=-0.25)
+    #criterion = FocalLoss(gamma=2, alpha=-0.25)
     # Recommendation by BERT: lr: 5e-5, 2e-5, 3e-5
     # Batchsize: 16, 32
 
@@ -112,7 +112,6 @@ if __name__ == '__main__':
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=100, num_training_steps=num_train_optimization_steps)  # PyTorch scheduler
     scheduler0 = get_constant_schedule(optimizer)  # PyTorch scheduler
-    #optimizer = AdamW(model.parameters(), lr=args.lr)
     
     if not os.path.exists(args.ckpt_path):
         os.mkdir(args.ckpt_path)
@@ -155,8 +154,8 @@ if __name__ == '__main__':
             for i,(x_batch, y_batch) in pbar:
                 model.train()
                 y_pred = model(x_batch.cuda(), attention_mask=(x_batch>0).cuda())
-                loss =  criterion(y_pred.view(-1).cuda(),y_batch.float().cuda())
-                loss = loss.mean()
+                loss =  sigmoid_focal_loss(y_pred.view(-1).cuda(),y_batch.float().cuda(), reduction='mean')
+                loss.requires_grad=True
                 loss.backward()
                 if i % args.accumulation_steps == 0 or i == len(pbar) - 1:
                     optimizer.step()
