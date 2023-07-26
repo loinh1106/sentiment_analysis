@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report,accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from loader.dataset import SentimentDataset
 from transformers import *
@@ -155,7 +156,7 @@ if __name__ == '__main__':
                 model.train()
                 y_pred = model(x_batch.cuda(), attention_mask=(x_batch>0).cuda())
                 loss =  sigmoid_focal_loss(y_pred.view(-1).cuda(),y_batch.float().cuda(), reduction='mean')
-                loss.requires_grad=True
+                loss = Variable(loss, requires_grad=True)
                 loss.backward()
                 if i % args.accumulation_steps == 0 or i == len(pbar) - 1:
                     optimizer.step()
